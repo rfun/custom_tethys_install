@@ -60,15 +60,21 @@ else
 fi
 
 # Set default options
-ALLOWED_HOST='128.187.106.130'
-TETHYS_HOME=~/tethys-nepal
-TETHYS_PORT=5500
-TETHYS_DB_USERNAME='tethys_db_wmo'
-TETHYS_DB_PASSWORD='tethysDB@WMO321'
+SUB_TETHYS_DIR='wmo'
 TETHYS_DB_PORT=5440
-CONDA_ENV_NAME='tethys_nepal'
+
+
+
+ALLOWED_HOST='128.187.106.130'
+TETHYS_HOME=~/tethys-${SUB_TETHYS_DIR}
+UWSGI_LOG_FILE='tethys-${SUB_TETHYS_DIR}'
+TETHYS_PORT=8000
+TETHYS_DB_USERNAME='tethys_db_${SUB_TETHYS_DIR}'
+TETHYS_DB_PASSWORD='tethysDBAdmin@321'
+CONDA_ENV_NAME='tethys_${SUB_TETHYS_DIR}'
 PYTHON_VERSION='2'
 BRANCH='master'
+PRODUCTION="true"
 
 TETHYS_SUPER_USER='tethysAdmin'
 TETHYS_SUPER_USER_EMAIL=''
@@ -398,14 +404,17 @@ then
     sudo chown -R ${USER} ${TETHYS_HOME}
     tethys manage collectall --noinput
     sudo chmod 705 ~
-    sudo ln -s ${TETHYS_HOME}/src/tethys_portal/tethys_nginx.conf
+    sudo touch /var/log/uwsgi/${UWSGI_LOG_FILE}.log
 
     if [ -n "${SELINUX}" ]
     then
         configure_selinux
     fi
 
-    sudo chown -R ${NGINX_USER}:${NGINX_GROUP} ${TETHYS_HOME}/src
+    sudo chown -R ${NGINX_USER}:${NGINX_GROUP} ${TETHYS_HOME}/src /var/log/uwsgi/${UWSGI_LOG_FILE}.log
+    sudo mv ${TETHYS_HOME}/src/tethys_portal/tethys.uwsgi.service ${TETHYS_HOME}/src/tethys_portal/tethys-${SUB_TETHYS_DIR}.uwsgi.service
+    sudo systemctl enable ${TETHYS_HOME}/src/tethys_portal/tethys-${SUB_TETHYS_DIR}.uwsgi.service
+    sudo systemctl start tethys-${SUB_TETHYS_DIR}.uwsgi.service
     set +x
     . deactivate
 
